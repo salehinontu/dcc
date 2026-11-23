@@ -1,0 +1,214 @@
+name: dji-fleet-dev
+
+# Fully containerised development stack: Postgres, EMQX, SRS, API, Vite and the
+# simulator. Run from the repository root:
+#
+#   docker compose -f infra/docker-compose.dev.yml up --build
+#
+# The defaults avoid the host `pnpm dev` ports, so both modes can run together.
+# Override the DEV_* variables for hardware access, ports or a different SRS candidate.
+#
+# Source is baked into the image and Compose Watch syncs edits into the running
+# containers. This avoids Windows bind-mount watcher problems entirely.
+
+x-dev-image: &dev-image
+  build:
+    context: ..
+    dockerfile: infra/docker/Dockerfile.dev
+  image: dji-fleet-dev:local
+  working_dir: /app
+  init: true
+  networks: [dev]
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dji
+      POSTGRES_PASSWORD: dji
+      POSTGRES_DB: dji
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U dji']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [dev]
+
+  emqx:
+    image: emqx/emqx:5.8.0
+    restart: unless-stopped
+    volumes:
+      - ./emqx/emqx.dev.conf:/opt/emqx/etc/emqx.conf:ro
+    ports:
+      - '${DEV_MQTT_PORT:-1884}:1883'
+    healthcheck:
+      test: ['CMD', 'emqx', 'ctl', 'status']
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
+    networks: [dev]
+
+  api:
+    <<: *dev-image
+    command: pnpm --filter @dji/api dev
+    volumes:
+      - screenshots:/data/screenshots
+      - recordings:/data/recordings
+      - models:/data/models
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgres://dji:dji@postgres:5432/dji
+      MQTT_URL: mqtt://emqx:1883
+      MQTT_USERNAME: dji-server
+      MQTT_PASSWORD: dji-server
+      MQTT_PUBLIC_HOST: ${DEV_MQTT_PUBLIC_HOST:-tcp://localhost:1884}
+      MQTT_CREDENTIAL_TTL_HOURS: 168
+      SCREENSHOT_DIR: /data/screenshots
+      RECORDING_DIR: /data/recordings
+      RECORDING_ROOTS: '/data/recordings=Docker volume'
+      # The server recorder reads a live stream from SRS over the compose network.
+      MEDIA_RTMP_INTERNAL_TEMPLATE: 'rtmp://srs:1935/live/{key}'
+      # Install once: docker compose -f infra/docker-compose.dev.yml exec api pnpm models:fetch
+      PEOPLE_MODEL_PATH: /data/models/yolox_l.onnx
+      PEOPLE_QUICK_MODEL_PATH: /data/models/yolox_s.onnx
+      MEDIA_RTMP_HOST: ${DEV_MEDIA_RTMP_HOST:-srs:1935}
+      # The API proxies WHEP to SRS; browsers never receive this address or the stream key.
+      MEDIA_WHEP_INTERNAL_TEMPLATE: 'http://srs:1985/rtc/v1/whep/?app=live&stream={key}'
+      CORS_ORIGINS: ''
+      PUBLIC_HOST: ${DEV_PUBLIC_HOST:-localhost}
+      JWT_SECRET: ${DEV_JWT_SECRET:-dev-secret-change-me}
+      # Roles that must use two-step sign-in (developer, admin, subadmin); empty keeps it optional.
+      MFA_REQUIRED_ROLES: ${DEV_MFA_REQUIRED_ROLES:-}
+      # Placeholders keep the Pilot page's licence gate satisfied for the simulator and
+      # the fake-bridge E2E. Override DEV_DJI_* to use real credentials in this stack.
+      DJI_APP_ID: ${DEV_DJI_APP_ID:-dev-app-id}
+      DJI_APP_KEY: ${DEV_DJI_APP_KEY:-dev-app-key}
+      DJI_APP_LICENSE: ${DEV_DJI_APP_LICENSE:-dev-license}
+      DJI_PLATFORM_NAME: ${DEV_DJI_PLATFORM_NAME:-Drone Fleet}
+      DJI_WORKSPACE_ID: ${DEV_DJI_WORKSPACE_ID:-00000000-0000-4000-8000-000000000001}
+      DJI_WORKSPACE_NAME: ${DEV_DJI_WORKSPACE_NAME:-Demo Workspace}
+      # The simulator is this stack's only controller; it needs an approved enrolment.
+      SEED_SIMULATOR: '1'
+    ports:
+      - '${DEV_API_PORT:-3001}:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      emqx:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>r.json()).then(h=>process.exit(h.ok&&h.mqttSubscribed?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+    stop_grace_period: 10s
+    develop:
+      watch:
+        # tsx watch cannot see inotify events through a Windows bind mount, so let
+        # Compose restart the container after it syncs the changed source.
+        - action: sync+restart
+          path: ../apps/api/src
+          target: /app/apps/api/src
+        - action: sync+restart
+          path: ../apps/api/schema.sql
+          target: /app/apps/api/schema.sql
+        - action: sync+restart
+          path: ../packages/protocol/src
+          target: /app/packages/protocol/src
+
+  srs:
+    image: ossrs/srs:6
+    restart: unless-stopped
+    environment:
+      # The browser on this machine reaches 127.0.0.1:8000 through the published UDP
+      # port. For a browser on another machine, set DEV_SRS_CANDIDATE to the host LAN IP.
+      CANDIDATE: ${DEV_SRS_CANDIDATE:-127.0.0.1}
+    volumes:
+      - ./srs/srs.dev.conf:/usr/local/srs/conf/docker.conf:ro
+    command: ['./objs/srs', '-c', 'conf/docker.conf']
+    ports:
+      - '${DEV_RTMP_PORT:-1936}:1935'
+      # Debug endpoints stay on loopback: only the API's WHEP proxy uses them.
+      - '127.0.0.1:${DEV_SRS_HTTP_PORT:-1986}:1985'
+      - '127.0.0.1:${DEV_SRS_FLV_PORT:-8081}:8080'
+      # Must remain 8000: the SRS candidate advertises 127.0.0.1:8000.
+      - '8000:8000/udp'
+    networks: [dev]
+
+  web:
+    <<: *dev-image
+    command: pnpm --filter @dji/web dev
+    environment:
+      API_PROXY_TARGET: http://api:3000
+      API_WS_TARGET: ws://api:3000
+      VITE_HOST: 0.0.0.0
+      VITE_USE_POLLING: '1'
+    ports:
+      - '${DEV_WEB_PORT:-5174}:5173'
+    depends_on:
+      api:
+        condition: service_healthy
+      srs:
+        condition: service_started
+    stop_grace_period: 10s
+    develop:
+      watch:
+        - action: sync
+          path: ../apps/web/src
+          target: /app/apps/web/src
+        - action: sync
+          path: ../apps/web/index.html
+          target: /app/apps/web/index.html
+        - action: sync+restart
+          path: ../apps/web/vite.config.ts
+          target: /app/apps/web/vite.config.ts
+        - action: sync+restart
+          path: ../packages/protocol/src
+          target: /app/packages/protocol/src
+
+  simulator:
+    <<: *dev-image
+    command: pnpm --filter @dji/simulator dev
+    environment:
+      MQTT_URL: mqtt://emqx:1883
+      MQTT_USERNAME: dji-server
+      MQTT_PASSWORD: dji-server
+      # Debian's ffmpeg is more reliable than the platform-specific npm binary.
+      FFMPEG_PATH: /usr/bin/ffmpeg
+      SIM_DRONES: ${DEV_SIM_DRONES:-3}
+      SIM_VIDEO: ${DEV_SIM_VIDEO:-1}
+      SIM_RATE_MS: ${DEV_SIM_RATE_MS:-1000}
+      SIM_ORIGIN_LAT: ${DEV_SIM_ORIGIN_LAT:-23.8103}
+      SIM_ORIGIN_LON: ${DEV_SIM_ORIGIN_LON:-90.4125}
+    depends_on:
+      api:
+        condition: service_healthy
+    stop_grace_period: 20s
+    develop:
+      watch:
+        - action: sync+restart
+          path: ../tools/simulator/src
+          target: /app/tools/simulator/src
+        - action: sync+restart
+          path: ../packages/protocol/src
+          target: /app/packages/protocol/src
+
+volumes:
+  pgdata:
+  screenshots:
+  recordings:
+  models:
+
+networks:
+  dev:

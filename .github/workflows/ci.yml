@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.20.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm --filter @dji/api test
+      - run: pnpm typecheck
+      - run: pnpm build
+
+  # The /pilot page is what DJI Pilot 2 loads, and it is the only screen with a WebView
+  # target older than the development browser. This runs the built app against the same
+  # Chrome the runner ships with; the cascade-layer assertion happens inside `pnpm build`.
+  pilot-compat:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.20.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Pilot page renders and binds
+        working-directory: apps/web
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
+          BASE_URL: http://127.0.0.1:4195
+        run: |
+          pnpm exec vite preview --port 4195 --strictPort &
+          preview_pid=$!
+          trap 'kill $preview_pid' EXIT
+          for _ in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4195/pilot > /dev/null; then break; fi
+            sleep 1
+          done
+          cd ../..
+          node tools/e2e/pilot-compat.mjs
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build API image
+        run: docker build -f apps/api/Dockerfile -t dji-api:ci .
+      - name: Build web image
+        run: docker build -f apps/web/Dockerfile -t dji-web:ci .
+      - name: Build dev image
+        run: docker build -f infra/docker/Dockerfile.dev -t dji-dev:ci .
+      - name: Assert the API image contains no local state
+        run: docker run --rm --entrypoint sh dji-api:ci -c 'test ! -e /app/apps/api/.data'
+      - name: Validate compose files
+        run: |
+          docker compose -f infra/docker-compose.dev.yml config > /dev/null
+          cp infra/.env.production.example infra/.env.production
+          docker compose --env-file infra/.env.production -f infra/docker-compose.prod.yml config > /dev/null
+          rm infra/.env.production

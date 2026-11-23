@@ -1,0 +1,21 @@
+{
+  "name": "@dji/simulator",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dji/protocol": "workspace:*",
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "mqtt": "^5.10.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

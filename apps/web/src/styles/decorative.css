@@ -1,0 +1,354 @@
+/* Decorative sign-in surfaces that are clearer as CSS than as long arbitrary utilities.
+   Everything else on these screens lives in utilities. */
+
+.topo-line {
+  fill: none;
+  stroke: var(--map-contour);
+  stroke-width: 1;
+}
+
+.topo-line.accent {
+  stroke: var(--gold);
+  stroke-opacity: 0.55;
+  stroke-width: 1.4;
+}
+
+.topo-grid {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.topo-ticks {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+
+.topo-point {
+  fill: var(--gold-strong);
+  opacity: 0.85;
+}
+
+.topo-ring {
+  fill: none;
+  stroke: var(--gold-strong);
+  stroke-opacity: 0.5;
+}
+
+.topo-ping {
+  fill: var(--pine-strong);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  opacity: 0.8;
+}
+
+.topo-ping-sub {
+  fill: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.05em;
+}
+
+.topo-leader {
+  stroke: var(--pine);
+  stroke-opacity: 0.35;
+  stroke-width: 1;
+}
+
+@keyframes capture-flash {
+  0% {
+    opacity: 0.55;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+[data-decor='capture-flash'] {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  animation: capture-flash 360ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-decor='capture-flash'] {
+    animation: none;
+  }
+}
+
+[data-decor='tile-scrim'] {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    var(--tile-scrim-top) 0%,
+    var(--tile-scrim-top-clear) 28%,
+    var(--tile-scrim-top-clear) 58%,
+    var(--tile-scrim-bottom) 100%
+  );
+  pointer-events: none;
+}
+
+[data-decor='focus-scrim'] {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    var(--focus-scrim-top) 0%,
+    var(--focus-scrim-top-clear) 25%,
+    var(--focus-scrim-top-clear) 62%,
+    var(--focus-scrim-bottom) 100%
+  );
+  pointer-events: none;
+}
+
+[data-drop-target='true'] [data-decor='tile-frame']::after {
+  content: 'Drop here';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--drop-target-bg);
+  color: var(--tile-text);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+[data-decor='tile-frame']:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  aspect-ratio: auto;
+}
+
+[data-decor='tile-frame']:fullscreen video {
+  object-fit: contain;
+}
+
+[data-decor='tile-frame']:fullscreen [data-decor='tile-name'] {
+  top: 48px;
+  left: 18px;
+  font-size: 18px;
+}
+
+[data-decor='tile-frame']:fullscreen [data-decor='tile-expand'] {
+  display: none;
+}
+
+[data-decor='tile-frame']:fullscreen [data-decor='tile-fullscreen'] {
+  right: 18px;
+  bottom: 18px;
+}
+
+[data-decor='legend-swatch']::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -1px;
+  width: 4px;
+  height: 4px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: var(--pine);
+}
+
+[data-decor='login-visual'] {
+  background:
+    radial-gradient(900px 520px at 0% 0%, var(--login-visual-glow), transparent 62%),
+    radial-gradient(700px 480px at 100% 100%, var(--login-visual-glow-soft), transparent 60%),
+    var(--paper);
+}
+
+[data-decor='login-panel'] {
+  background: linear-gradient(
+    160deg,
+    var(--login-panel-start) 0%,
+    var(--login-panel-mid) 48%,
+    var(--login-panel-end) 100%
+  );
+}
+
+[data-decor='login-panel']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at 50% 45%, #000 20%, transparent 78%);
+  pointer-events: none;
+}
+
+[data-decor='login-panel']::after {
+  content: '';
+  position: absolute;
+  top: 28px;
+  right: 28px;
+  width: 54px;
+  height: 54px;
+  border-top: 2px solid var(--gold);
+  border-right: 2px solid var(--gold);
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+[data-decor='login-title'] {
+  background: linear-gradient(120deg, var(--ink) 30%, var(--pine) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+[data-decor='login-caption']::before {
+  content: '';
+  width: 22px;
+  height: 1px;
+  background: var(--line-strong);
+}
+
+[data-decor='login-watermark'] {
+  position: absolute;
+  top: 9%;
+  right: clamp(12px, 2vw, 32px);
+  z-index: 1;
+  width: min(42%, 560px);
+  height: auto;
+  opacity: 0.38;
+  filter: grayscale(1) contrast(1.1);
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  user-select: none;
+}
+
+@media (max-width: 1100px) {
+  [data-decor='login-watermark'] {
+    top: 70px;
+    width: min(46%, 420px);
+  }
+}
+
+@media (max-width: 760px) {
+  [data-decor='login-watermark'] {
+    display: none;
+  }
+}
+
+[data-decor='login-panel-photo'] {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  width: clamp(200px, 38%, 420px);
+  aspect-ratio: 395 / 241;
+  height: auto;
+  object-fit: cover;
+  opacity: 0.42;
+  filter: grayscale(1) contrast(1.2) brightness(1.15);
+  mix-blend-mode: luminosity;
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent, #000 55%),
+    linear-gradient(to right, transparent, #000 55%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to bottom, transparent, #000 55%),
+    linear-gradient(to right, transparent, #000 55%);
+  mask-composite: intersect;
+  pointer-events: none;
+  user-select: none;
+}
+
+[data-decor='login-panel-photo-top'] {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 0;
+  width: clamp(220px, 42%, 460px);
+  aspect-ratio: 675 / 454;
+  height: auto;
+  object-fit: cover;
+  opacity: 0.42;
+  filter: grayscale(1) contrast(1.2) brightness(1.15);
+  mix-blend-mode: luminosity;
+  -webkit-mask-image:
+    linear-gradient(to top, transparent, #000 55%), linear-gradient(to right, transparent, #000 55%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to top, transparent, #000 55%), linear-gradient(to right, transparent, #000 55%);
+  mask-composite: intersect;
+  pointer-events: none;
+  user-select: none;
+}
+
+[data-decor='login-panel-photo-top-left'] {
+  position: absolute;
+  bottom: 30px;
+  left: 0;
+  z-index: 0;
+  width: clamp(170px, 30%, 320px);
+  aspect-ratio: 346 / 247;
+  height: auto;
+  object-fit: cover;
+  opacity: 0.42;
+  filter: grayscale(1) contrast(1.2) brightness(1.15);
+  mix-blend-mode: luminosity;
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent, #000 55%),
+    linear-gradient(to left, transparent, #000 55%), linear-gradient(to top, transparent, #000 14%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to bottom, transparent, #000 55%),
+    linear-gradient(to left, transparent, #000 55%), linear-gradient(to top, transparent, #000 14%);
+  mask-composite: intersect;
+  pointer-events: none;
+  user-select: none;
+}
+
+[data-decor='login-panel-photo-upper-left'] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  width: clamp(180px, 32%, 340px);
+  aspect-ratio: 427 / 290;
+  height: auto;
+  object-fit: cover;
+  opacity: 0.42;
+  filter: grayscale(1) contrast(1.2) brightness(1.15);
+  mix-blend-mode: luminosity;
+  -webkit-mask-image:
+    linear-gradient(to top, transparent, #000 55%), linear-gradient(to left, transparent, #000 55%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to top, transparent, #000 55%), linear-gradient(to left, transparent, #000 55%);
+  mask-composite: intersect;
+  pointer-events: none;
+  user-select: none;
+}
+
+@media (max-width: 760px) {
+  [data-decor='login-panel-photo'] {
+    width: 180px;
+  }
+
+  [data-decor='login-panel-photo-top'] {
+    width: 190px;
+  }
+
+  [data-decor='login-panel-photo-top-left'] {
+    width: 150px;
+  }
+
+  [data-decor='login-panel-photo-upper-left'] {
+    width: 150px;
+  }
+}

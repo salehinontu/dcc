@@ -1,0 +1,22 @@
+/* ============================================================
+   Drone Fleet — Tailwind entry
+   Layer order: tokens/theme, base globals, decorative effects,
+   then utilities.
+   ============================================================ */
+
+@layer theme, base, components, utilities;
+
+@import 'tailwindcss/theme.css' layer(theme);
+@import './styles/tokens.css';
+@import 'tailwindcss/utilities.css' layer(utilities) source(none);
+@import './styles/base.css' layer(base);
+@import './styles/decorative.css' layer(components);
+@import './styles/map.css';
+
+/* Only app source is scanned; repo docs and agent assets must not generate CSS. */
+@source './';
+@source '../index.html';
+@source not '../../docs';
+@source not '../../.claude';
+@source not '../../.opencode';
+@source not '../../design';

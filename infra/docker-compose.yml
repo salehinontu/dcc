@@ -1,0 +1,66 @@
+name: dji-fleet-poc
+
+# Development/test rig: real Postgres, EMQX and SRS for running the API on the host
+# (`pnpm --filter @dji/api dev`) instead of the embedded services.
+#
+#   docker compose -f infra/docker-compose.yml up -d
+#   DATABASE_URL=postgres://dji:dji@localhost:5432/dji
+#   MQTT_URL=mqtt://127.0.0.1:1883
+#   MEDIA_RTMP_HOST=localhost:1935
+#   MEDIA_WHEP_INTERNAL_TEMPLATE=http://127.0.0.1:1985/rtc/v1/whep/?app=live&stream={key}
+#
+# NOT a production deployment: there is no TLS, 1883/5432/18083 are published, and the
+# EMQX auth/ACL config is not mounted, so per-controller authorization is inactive.
+# Use infra/docker-compose.prod.yml for anything a real controller connects to.
+# Redis below is not read by the API today.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: dji
+      POSTGRES_PASSWORD: dji
+      POSTGRES_DB: dji
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U dji']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+
+  emqx:
+    image: emqx/emqx:5.8.0
+    ports:
+      - '1883:1883' # MQTT
+      - '8883:8883' # MQTT over TLS
+      - '18083:18083' # dashboard, admin/public on first boot
+    volumes:
+      - emqxdata:/opt/emqx/data
+
+  srs:
+    image: ossrs/srs:6
+    ports:
+      - '1935:1935' # RTMP ingest from Pilot 2
+      - '1985:1985' # HTTP API and WHEP signalling
+      - '8080:8080' # HTTP-FLV fallback
+      - '8000:8000/udp' # WebRTC media
+    environment:
+      # Set this to the public IP on a VM; 127.0.0.1 works for local browser playback.
+      CANDIDATE: '127.0.0.1'
+    volumes:
+      - ./srs/srs.conf:/usr/local/srs/conf/docker.conf:ro
+    command: ['./objs/srs', '-c', 'conf/docker.conf']
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+
+volumes:
+  pgdata:
+  emqxdata:

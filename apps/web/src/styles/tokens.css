@@ -1,0 +1,332 @@
+/* ============================================================
+   Drone Fleet — design tokens
+   The :root values are canonical. @theme exposes them to Tailwind;
+   @theme static keeps the fonts and shadows emitted on :root because
+   the remaining hand-written rules still reference them.
+   ============================================================ */
+
+:root {
+  color-scheme: light;
+
+  /* Surfaces */
+  --paper: #f2f6fc;
+  --surface: #fafcff;
+  --surface-2: #ffffff;
+  --sunken: #e7eef8;
+  --line: #dce5f1;
+  --line-strong: #c3d1e4;
+
+  /* Ink */
+  --ink: #0c1b33;
+  --ink-2: #44546b;
+  --ink-3: #627189;
+
+  /* Primary brand blue (the historical --pine name holds the brand blue) */
+  --pine: #0a58b8;
+  --pine-strong: #063f8c;
+  --pine-soft: #dfeafa;
+  --pine-wash: #eff5fd;
+
+  /* Brand gold: the accent colour. Accent only; never a status colour. */
+  --gold: #f2b300;
+  --gold-strong: #d19700;
+  --gold-soft: #fff1c7;
+  --gold-wash: #fff8e1;
+  --on-gold: #0b1d3c;
+
+  /* Map zones: red is reserved for no-fly areas, blue for geofences. */
+  --zone-nofly: #d92d3a;
+  --zone-nofly-soft: #fdecee;
+  --zone-nofly-halo: rgba(217, 45, 58, 0.22);
+  --zone-geofence: #1d6fd6;
+  --zone-geofence-soft: #e7f0fc;
+  --zone-geofence-halo: rgba(29, 111, 214, 0.22);
+
+  /* Signals */
+  --live: #a94426;
+  --live-soft: #f6e8e3;
+  --warn: #83560f;
+  --warn-soft: #f3ebda;
+  --ok: #2c6b4f;
+  --ok-soft: #e6efe9;
+
+  /* Video and focus */
+  --dark-bg: #08111f;
+  --dark-surface: #0f1b2e;
+  --dark-raised: #16253b;
+  --dark-line: #243650;
+  --dark-text: #e9f0fa;
+  --dark-muted: #a6b6cc;
+  --dark-faint: #8a9bb3;
+  --dark-pine: #ffc83a;
+  --dark-live: #e08a6a;
+
+  /* Cartography */
+  --map-land: #eaf0f8;
+  --map-water: #c6dbef;
+  --map-park: #dfe6d5;
+  --map-contour: #d9e3f0;
+  --map-label: #52627a;
+  --map-label-bg: rgba(244, 248, 253, 0.84);
+  --map-attrib-bg: rgba(250, 252, 255, 0.86);
+  --map-marker-shadow: rgba(8, 24, 56, 0.2);
+  --map-marker-shadow-strong: rgba(8, 24, 56, 0.26);
+  --map-marker-ring: rgba(10, 88, 184, 0.18);
+
+  /* Sign-in surface */
+  --danger: #a83d46;
+  --danger-strong: #7f2029;
+  --danger-deep: #651820;
+  --danger-text: #7f3520;
+  --danger-edge: #e5c9c0;
+  --login-panel-start: #0b52b4;
+  --login-panel-mid: #073a86;
+  --login-panel-end: #04224f;
+  --login-visual-glow: rgba(10, 88, 184, 0.14);
+  --login-visual-glow-soft: rgba(242, 179, 0, 0.13);
+  --login-card-ink: #0f1d33;
+  --login-card-muted: #66758c;
+  --login-card-line: #dbe4f0;
+  --login-card-line-hover: #bccbe0;
+  --login-card-edge: rgba(255, 255, 255, 0.9);
+  --login-focus-ring: rgba(10, 88, 184, 0.2);
+  --login-banner-edge: rgba(10, 88, 184, 0.28);
+  --login-foot-line: rgba(255, 255, 255, 0.16);
+  --login-foot-text: rgba(255, 255, 255, 0.72);
+  --input-hover: #b4c6de;
+  --input-focus-ring: rgba(10, 88, 184, 0.14);
+  --live-focus-ring: rgba(169, 68, 38, 0.1);
+  --search-focus-ring: rgba(10, 88, 184, 0.12);
+  --warn-edge: #e3d2b6;
+  --warn-text: #6a4710;
+  --spinner-track-dark: rgba(255, 255, 255, 0.16);
+  --spinner-track-light: rgba(12, 27, 51, 0.12);
+  --shadow-btn: 0 1px 2px rgba(8, 30, 70, 0.07);
+  --line-soft: #d3e1f4;
+  --line-rose: #c6d9f1;
+  --pine-tint: #f4f8fe;
+  --pine-hover: #0949a0;
+  --pine-hover-strong: #04336f;
+  --glass-surface: rgba(250, 252, 255, 0.78);
+  --glass-paper: rgba(243, 247, 253, 0.94);
+  --scrim: rgba(6, 16, 32, 0.4);
+  --body-glow: rgba(10, 88, 184, 0.1);
+  --tile-scrim-top: rgba(5, 10, 20, 0.42);
+  --tile-scrim-top-clear: rgba(5, 10, 20, 0);
+  --tile-scrim-bottom: rgba(5, 10, 20, 0.58);
+  --focus-scrim-top: rgba(4, 8, 16, 0.36);
+  --focus-scrim-top-clear: rgba(4, 8, 16, 0);
+  --focus-scrim-bottom: rgba(4, 8, 16, 0.6);
+  --drop-target-bg: rgba(6, 12, 24, 0.55);
+  --rail-shadow: 4px 0 28px rgba(8, 30, 70, 0.06);
+  --shadow-primary: 0 6px 16px rgba(10, 88, 184, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  --shadow-primary-hover:
+    0 8px 20px rgba(6, 63, 140, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  --tile-hover-border: #b9cde6;
+  --tile-foot-end: #f7faff;
+  --tile-text: #eef3fa;
+  --tile-quality-text: rgba(233, 240, 250, 0.72);
+  --tile-coord-text: rgba(236, 242, 250, 0.82);
+  --focus-camera-text: rgba(236, 242, 250, 0.6);
+  --tile-control-bg: rgba(6, 14, 28, 0.7);
+  --tile-control-text: #ebf1fa;
+  --tile-notice-bg: rgba(6, 14, 28, 0.86);
+  /* Recording on this computer: a red that is not --live, which means "streaming". */
+  --rec: #e5484d;
+  --rec-bg: rgba(200, 34, 40, 0.9);
+  --rec-text: #ffffff;
+  /* Text on an aircraft's colour: light on dark colours, dark on light ones. */
+  --drone-label-light: #ffffff;
+  --drone-label-dark: #0b1424;
+  --wall-empty-bg: rgba(244, 248, 253, 0.5);
+  --pill-bg: rgba(6, 14, 28, 0.76);
+  --pill-border: rgba(255, 255, 255, 0.14);
+  --pill-text: #eef3fa;
+  --pill-pending-text: #d6dfeb;
+  --pill-pending-dot: #c9a96a;
+  --pill-live-ring: rgba(224, 138, 106, 0.2);
+  --pill-pending-ring: rgba(201, 169, 106, 0.18);
+  --whep-bg: rgba(0, 0, 0, 0.58);
+  --whep-failed-bg: rgba(120, 30, 30, 0.74);
+  --focus-frame-bg: #050a14;
+  --dark-btn-hover-border: #34496a;
+  --dark-btn-hover-bg: #1b2d47;
+  --progress-track: rgba(255, 255, 255, 0.08);
+  --shadow-tile-text: 0 1px 3px rgba(0, 0, 0, 0.7);
+  --shadow-layout-active: 0 4px 12px rgba(10, 88, 184, 0.35);
+  --capture-notice-bg: rgba(6, 12, 24, 0.9);
+  --capture-ok: #8fd1a9;
+  --capture-error-border: rgba(224, 138, 106, 0.5);
+  --shot-viewer-bg: rgba(4, 8, 16, 0.88);
+  --shadow-brand: 0 4px 12px rgba(8, 50, 120, 0.2);
+  --shadow-login-panel: -10px 0 32px rgba(4, 34, 79, 0.2);
+  --shadow-login-card: 0 28px 60px rgba(3, 18, 44, 0.42), 0 4px 14px rgba(3, 18, 44, 0.2);
+  --shadow-login-submit: 0 8px 18px rgba(214, 150, 0, 0.34);
+  --shadow-login-banner: 0 22px 48px rgba(8, 50, 110, 0.22);
+
+  /* Geometry */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --rail-w: 288px;
+  --bar-h: 64px;
+  --ease: 160ms cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+
+@media (max-width: 1240px) {
+  :root {
+    --rail-w: 264px;
+  }
+}
+
+/* Only design tokens may generate utilities. */
+@theme {
+  --color-*: initial;
+  --font-*: initial;
+  --text-*: initial;
+  --radius-*: initial;
+  --shadow-*: initial;
+  --breakpoint-*: initial;
+  --animate-*: initial;
+}
+
+/* Always emitted on :root so hand-written base, decorative and map CSS can use them. */
+@theme static {
+  --font-sans: 'Instrument Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --shadow-float: 0 18px 44px rgba(8, 30, 70, 0.16), 0 3px 10px rgba(8, 30, 70, 0.07);
+  --shadow-card: 0 4px 16px rgba(8, 30, 70, 0.08), 0 1px 3px rgba(8, 30, 70, 0.05);
+}
+
+@theme {
+  --spacing: 4px;
+  --radius-full: 9999px;
+
+  /* Recurring px sizes from the approved console. One-off sizes use arbitrary values. */
+  --text-8: 8px;
+  --text-85: 8.5px;
+  --text-9: 9px;
+  --text-95: 9.5px;
+  --text-10: 10px;
+  --text-105: 10.5px;
+  --text-11: 11px;
+  --text-115: 11.5px;
+  --text-12: 12px;
+  --text-125: 12.5px;
+  --text-13: 13px;
+  --text-135: 13.5px;
+  --text-14: 14px;
+
+  --text-display-3xs: clamp(10px, 1.1vw, 12px);
+  --text-display-2xs: clamp(22px, 3.2vw, 28px);
+  --text-display-sm: clamp(31px, 9.4vw, 38px);
+  --text-display-md: clamp(33px, 8.6vw, 42px);
+  --text-display-lg: clamp(36px, 4.2vw, 50px);
+  --text-display-xl: clamp(38px, 4.5vw, 62px);
+
+  --animate-spin: spin 900ms linear infinite;
+  --animate-indeterminate: indeterminate 1.7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  --animate-rec: rec-blink 1.2s ease-in-out infinite;
+  --default-transition-duration: 160ms;
+  --default-transition-timing-function: cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+
+@theme inline {
+  --color-white: #fff;
+  --color-black: #000;
+
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-sunken: var(--sunken);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+
+  --color-pine: var(--pine);
+  --color-pine-strong: var(--pine-strong);
+  --color-pine-soft: var(--pine-soft);
+  --color-pine-wash: var(--pine-wash);
+
+  --color-gold: var(--gold);
+  --color-gold-strong: var(--gold-strong);
+  --color-gold-soft: var(--gold-soft);
+  --color-gold-wash: var(--gold-wash);
+  --color-on-gold: var(--on-gold);
+
+  --color-zone-nofly: var(--zone-nofly);
+  --color-zone-nofly-soft: var(--zone-nofly-soft);
+  --color-zone-geofence: var(--zone-geofence);
+  --color-zone-geofence-soft: var(--zone-geofence-soft);
+
+  --color-live: var(--live);
+  --color-live-soft: var(--live-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+
+  --color-danger: var(--danger);
+  --color-danger-strong: var(--danger-strong);
+  --color-danger-deep: var(--danger-deep);
+  --color-danger-text: var(--danger-text);
+  --color-danger-edge: var(--danger-edge);
+  --color-login-panel-mid: var(--login-panel-mid);
+  --color-login-card-ink: var(--login-card-ink);
+  --color-login-card-muted: var(--login-card-muted);
+  --color-login-card-line: var(--login-card-line);
+  --color-login-card-line-hover: var(--login-card-line-hover);
+  --color-login-card-edge: var(--login-card-edge);
+  --color-login-banner-edge: var(--login-banner-edge);
+  --color-login-foot-line: var(--login-foot-line);
+  --color-login-foot-text: var(--login-foot-text);
+  --color-input-hover: var(--input-hover);
+  --color-warn-edge: var(--warn-edge);
+  --color-warn-text: var(--warn-text);
+  --color-line-soft: var(--line-soft);
+  --color-line-rose: var(--line-rose);
+  --color-pine-tint: var(--pine-tint);
+  --color-pine-hover: var(--pine-hover);
+  --color-pine-hover-strong: var(--pine-hover-strong);
+  --color-glass-surface: var(--glass-surface);
+  --color-glass-paper: var(--glass-paper);
+  --color-scrim: var(--scrim);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+
+  --color-dark-bg: var(--dark-bg);
+  --color-dark-surface: var(--dark-surface);
+  --color-dark-raised: var(--dark-raised);
+  --color-dark-line: var(--dark-line);
+  --color-dark-text: var(--dark-text);
+  --color-dark-muted: var(--dark-muted);
+  --color-dark-faint: var(--dark-faint);
+  --color-dark-pine: var(--dark-pine);
+  --color-dark-live: var(--dark-live);
+
+  --color-map-land: var(--map-land);
+  --color-map-water: var(--map-water);
+  --color-map-park: var(--map-park);
+  --color-map-contour: var(--map-contour);
+  --color-map-label: var(--map-label);
+
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+  --spacing-rail: var(--rail-w);
+  --spacing-bar: var(--bar-h);
+  --ease-console: cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+
+/* Inclusive max-width variants: the design is desktop-first.
+   Define widest first so the narrowest matching range wins the cascade. */
+@custom-variant until-wide-lg (@media (max-width: 1240px));
+@custom-variant until-wide (@media (max-width: 1100px));
+@custom-variant until-drawer (@media (max-width: 900px));
+@custom-variant until-stack (@media (max-width: 760px));
+@custom-variant until-phone-lg (@media (max-width: 560px));
+@custom-variant until-phone (@media (max-width: 520px));
+@custom-variant until-narrow (@media (max-width: 420px));
+@custom-variant pointer-fine (@media (pointer: fine));
+@custom-variant pointer-coarse (@media (pointer: coarse));
+@custom-variant pilot-landscape (@media (orientation: landscape) and (min-width: 720px) and (max-height: 760px));

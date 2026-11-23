@@ -1,0 +1,30 @@
+# Overlay for serving the production stack behind an existing reverse proxy that hosts
+# several applications on one origin. The dashboard is built for a path prefix and the
+# front-door Nginx owns :80/:443; this project never publishes those ports.
+#
+# Usage, from the repository root:
+#
+#   docker compose --env-file infra/.env.production \
+#     -f infra/docker-compose.prod.yml -f infra/docker-compose.path.yml up -d --build
+#
+# The front door must strip /drone-fleet/ before proxying to the `drone-fleet-web` alias
+# and forward WebSocket upgrades. The app itself is built with VITE_BASE_PATH, so all of
+# its asset, API, WebSocket and WHEP URLs carry the prefix.
+services:
+  web:
+    build:
+      args:
+        VITE_BASE_PATH: /drone-fleet/
+    # The shared front door publishes 80/443; publishing here would collide with it.
+    ports: !reset []
+    networks: !override
+      internal: {}
+      dcim_internal:
+        aliases:
+          - drone-fleet-web
+
+networks:
+  # Created by the DCIM stack; the front-door container is attached to it.
+  dcim_internal:
+    external: true
+    name: dcim_dcim_internal

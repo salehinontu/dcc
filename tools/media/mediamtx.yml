@@ -1,0 +1,37 @@
+# Local media server for development: RTMP in, WebRTC (WHEP) out.
+# Production uses SRS via infra/docker-compose.yml; this file exists so video can be
+# exercised on Windows without Docker.
+#
+# tools/media/start.mjs renders this file into .data/mediamtx/runtime.yml and swaps
+# `curl.exe` for `curl` off Windows before starting the server.
+logLevel: info
+
+rtsp: no
+rtmp: yes
+rtmpAddress: :1935
+hls: no
+webrtc: yes
+# Signalling stays on loopback: browsers reach it through the API's WHEP proxy, never
+# directly, so the stream key never reaches a browser.
+webrtcAddress: 127.0.0.1:8889
+srt: no
+# MoQ is unused here; leaving it on writes auto.crt/auto.key into the repo root.
+moq: no
+
+# MediaMTX asks the API before accepting a publish or a read. The API allows a publish only
+# for a key its stream manager created, and a read only from its own WHEP proxy.
+authMethod: http
+authHTTPAddress: http://127.0.0.1:3000/internal/media/auth
+authHTTPExclude:
+  - action: api
+  - action: metrics
+  - action: pprof
+
+paths:
+  all_others:
+
+pathDefaults:
+  # Tell the backend when a publisher appears or disappears, so the stream state moves
+  # from "starting" to "live" and back. $MTX_PATH includes the app prefix ("live/<key>").
+  runOnAvailable: curl.exe -s -X POST "http://127.0.0.1:3000/internal/srs/on_publish?stream=$MTX_PATH"
+  runOnUnavailable: curl.exe -s -X POST "http://127.0.0.1:3000/internal/srs/on_unpublish?stream=$MTX_PATH"

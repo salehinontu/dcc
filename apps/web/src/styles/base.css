@@ -1,0 +1,121 @@
+/* Global base styles moved out of the pre-Tailwind sheet. Component styling lives in
+   utilities and the decorative/map files; this file only holds app-wide reset, typography,
+   focus, keyframes and the reduced-motion clamp. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(1100px 600px at 105% -10%, var(--body-glow), transparent 60%), var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+input,
+select {
+  min-width: 0;
+}
+
+a {
+  color: inherit;
+}
+
+svg {
+  display: block;
+}
+
+/* Default icon size; call-site size-* utilities are in a later layer and override it. */
+svg[data-icon] {
+  width: 18px;
+  height: 18px;
+}
+
+:where(button, a, [tabindex]):focus-visible {
+  outline: 2px solid var(--pine);
+  outline-offset: 2px;
+}
+
+.dark-shell {
+  color-scheme: dark;
+}
+
+.dark-shell :where(button, a, [tabindex]):focus-visible {
+  outline-color: var(--dark-pine);
+}
+
+input[type='search']::-webkit-search-cancel-button,
+input[type='search']::-webkit-search-decoration {
+  display: none;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes rec-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@keyframes indeterminate {
+  0% {
+    transform: translateX(-110%);
+  }
+
+  55% {
+    transform: translateX(160%);
+  }
+
+  100% {
+    transform: translateX(280%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+}

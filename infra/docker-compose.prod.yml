@@ -1,0 +1,171 @@
+name: dji-fleet-prod
+
+# Production stack. Not yet executed on the development machine; the first deployment is
+# its validation. See README -> Production deployment. Run from the repository root:
+#
+#   cp infra/.env.production.example infra/.env.production   # then edit it
+#   docker compose --env-file infra/.env.production -f infra/docker-compose.prod.yml up -d --build
+#
+# Certificates live in ${CERT_DIR} (default infra/certs) as fullchain.pem and privkey.pem.
+# The certificate must cover the app and mqtt hostnames (a wildcard covers all three).
+
+# Container logs are kept small: 3 files of 10 MB per service, so a busy day cannot fill the disk.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: '10m'
+    max-file: '3'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-dji}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-dji}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-dji}']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [internal]
+
+  emqx:
+    image: emqx/emqx:5.8.0
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      EMQX_NODE__COOKIE: ${EMQX_NODE_COOKIE:?set EMQX_NODE_COOKIE}
+    volumes:
+      - ./emqx/emqx.conf:/opt/emqx/etc/emqx.conf:ro
+      - ${CERT_DIR:-./certs}:/opt/emqx/etc/certs:ro
+    ports:
+      - '8883:8883'
+    healthcheck:
+      test: ['CMD', 'emqx', 'ctl', 'status']
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
+    networks: [internal]
+
+  srs:
+    image: ossrs/srs:6
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      CANDIDATE: ${PUBLIC_IP:?set PUBLIC_IP}
+    volumes:
+      - ./srs/srs.prod.conf:/usr/local/srs/conf/docker.conf:ro
+    ports:
+      - '${SRS_RTMP_PORT:-1935}:1935'
+      - '${SRS_WEBRTC_PORT:-8000}:8000/udp'
+    networks: [internal]
+
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    logging: *logging
+    init: true
+    stop_grace_period: 15s
+    env_file:
+      - ./.env.production
+    environment:
+      # Override the values that are internal to the compose network.
+      DATABASE_URL: postgres://${POSTGRES_USER:-dji}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-dji}
+      MQTT_URL: mqtt://emqx:1883
+      CORS_ORIGINS: ''
+      # The API proxies WHEP to SRS; the browser never sees this address or the stream key.
+      MEDIA_WHEP_INTERNAL_TEMPLATE: 'http://srs:1985/rtc/v1/whep/?app=live&stream={key}'
+      # The server recorder reads a live stream from SRS over the compose network, never the internet.
+      MEDIA_RTMP_INTERNAL_TEMPLATE: 'rtmp://srs:1935/live/{key}'
+      SCREENSHOT_DIR: /data/screenshots
+      RECORDING_DIR: /data/recordings
+      # Where a Developer may keep the videos, chosen in the app: only folders that live outside the
+      # container survive it being recreated, so the app offers just these two areas. The second is the
+      # host folder STORAGE_HOST_DIR (a big disk or a NAS mount), mounted below.
+      RECORDING_ROOTS: '/data/recordings=Default storage (Docker volume),/storage=Server storage folder (${STORAGE_HOST_DIR:-/srv/drone-fleet-storage})'
+      # Install once with: docker compose ... exec api pnpm models:fetch
+      PEOPLE_MODEL_PATH: /data/models/yolox_l.onnx
+      PEOPLE_QUICK_MODEL_PATH: /data/models/yolox_s.onnx
+    volumes:
+      # Captured feed stills; keep with the Postgres volume in backups.
+      - screenshots:/data/screenshots
+      # Video the server records on request. Large (about 2 GB an hour per drone at 4 Mbps) and NOT
+      # in the nightly backup: size the disk for it and copy it off the server on your own schedule.
+      - recordings:/data/recordings
+      # A folder of the host for videos that must live on another disk. Create it first and keep it
+      # writable; the app lets a Developer choose any folder inside it.
+      - ${STORAGE_HOST_DIR:-/srv/drone-fleet-storage}:/storage
+      # The people-counting model; re-downloadable, no need to back it up.
+      - models:/data/models
+      # This installation's logo (BRAND_LOGO_PATH=/data/branding/<file>).
+      - ./branding:/data/branding:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      emqx:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>r.json()).then(h=>process.exit(h.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks: [internal]
+
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?set APP_DOMAIN}
+      # Other names that serve the same site (space separated). Always defined, even when empty: the image's
+      # envsubst leaves a variable that is not set in the text as it is, and Nginx would refuse that.
+      APP_DOMAIN_ALIASES: ${APP_DOMAIN_ALIASES:-}
+    volumes:
+      - ${CERT_DIR:-./certs}:/etc/nginx/certs:ro
+      # ACME HTTP-01 webroot, so certbot can renew without stopping Nginx.
+      - ${ACME_WEBROOT:-/var/www/certbot}:/var/www/certbot:ro
+      # RTMPS: TLS in front of the media server (the same certificate as the dashboard).
+      - ./nginx/rtmps.conf:/etc/nginx/stream.d/rtmps.conf:ro
+    ports:
+      - '80:80'
+      - '443:443'
+      # Encrypted RTMP ingest, for encoders that can push rtmps://. Plain RTMP stays on the SRS port.
+      - '${RTMPS_PORT:-1936}:1936'
+    depends_on:
+      api:
+        condition: service_healthy
+      srs:
+        condition: service_started
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://127.0.0.1/healthz || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    networks: [internal]
+
+volumes:
+  pgdata:
+  screenshots:
+  recordings:
+  models:
+
+networks:
+  internal:

@@ -1,0 +1,275 @@
+/* MapLibre container and marker skin.
+   Deliberately unlayered: maplibre-gl.css is imported unlayered, and unlayered CSS
+   beats layered CSS regardless of specificity. Never apply utilities to this subtree. */
+
+.map {
+  position: absolute;
+  inset: 0;
+  background: var(--map-land);
+}
+
+.map .maplibregl-ctrl-top-right {
+  top: 12px;
+  right: 12px;
+}
+
+.map .maplibregl-ctrl-top-right .maplibregl-ctrl {
+  margin: 0;
+}
+
+.map .maplibregl-ctrl-group {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  box-shadow: var(--shadow-card);
+}
+
+.map .maplibregl-ctrl-group button {
+  width: 34px;
+  height: 34px;
+  background: transparent;
+}
+
+.map .maplibregl-ctrl-group button + button {
+  border-top: 1px solid var(--line);
+}
+
+.map .maplibregl-ctrl-group button:hover {
+  background: var(--pine-wash);
+}
+
+.map .maplibregl-ctrl-bottom-right {
+  right: 12px;
+  bottom: 8px;
+}
+
+.map .maplibregl-ctrl-attrib {
+  border-radius: 3px;
+  background: var(--map-attrib-bg);
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 8px;
+}
+
+.map .maplibregl-ctrl-attrib a {
+  color: var(--ink-2);
+}
+
+.drone-marker {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+}
+
+.drone-marker:focus-visible {
+  outline-offset: -1px;
+}
+
+/* Each aircraft has its own colour, set per marker as --drone-color. */
+.drone-dot {
+  display: block;
+  width: 11px;
+  height: 11px;
+  border: 2px solid var(--surface-2);
+  border-radius: 50%;
+  background: var(--drone-color, var(--pine));
+  box-shadow: 0 0 0 1px var(--map-marker-shadow);
+  transition:
+    transform var(--ease),
+    background var(--ease);
+}
+
+.drone-marker:hover .drone-dot {
+  transform: scale(1.18);
+}
+
+/* The selected aircraft is larger and sits in a soft halo of its own colour. */
+.drone-marker::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  background: var(--drone-color, var(--pine));
+  opacity: 0;
+  transform: scale(0.6);
+  transition:
+    opacity var(--ease),
+    transform var(--ease);
+}
+
+.drone-marker.is-selected::before {
+  opacity: 0.24;
+  transform: scale(1);
+}
+
+.drone-marker.is-selected .drone-dot {
+  width: 14px;
+  height: 14px;
+  box-shadow: 0 0 0 1px var(--map-marker-shadow-strong);
+}
+
+/* An offline aircraft keeps its colour as an outline but loses the fill. */
+.drone-marker.is-offline .drone-dot {
+  border-color: var(--drone-color, var(--line-strong));
+  background: var(--surface-2);
+  box-shadow: 0 0 0 1px var(--map-marker-shadow);
+}
+
+/* A pulsing red ring while the aircraft has an open zone alert. */
+.drone-marker.has-alert::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border: 2px solid var(--zone-nofly);
+  border-radius: 50%;
+  animation: alert-ping 1.3s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes alert-ping {
+  from {
+    opacity: 0.95;
+    transform: scale(0.65);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+/* The aircraft's name, always shown, on its own colour so each one is told apart at a glance.
+   --drone-label-text is dark or light, picked per colour for contrast. */
+.drone-label {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 50%;
+  max-width: 160px;
+  overflow: hidden;
+  padding: 1px 6px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: var(--drone-color, var(--pine));
+  box-shadow: 0 0 0 1px var(--map-marker-shadow);
+  color: var(--drone-label-text, var(--drone-label-light));
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.drone-marker.is-selected .drone-label {
+  box-shadow:
+    0 0 0 2px var(--gold),
+    0 0 0 3px var(--map-marker-shadow-strong);
+}
+
+.drone-marker.is-offline .drone-label {
+  opacity: 0.7;
+}
+
+@media (max-width: 900px) {
+  .map .maplibregl-ctrl-bottom-right {
+    top: 90px;
+    right: 16px;
+    bottom: auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .map .maplibregl-ctrl-top-right {
+    top: 12px;
+    right: 16px;
+  }
+
+  .map .maplibregl-ctrl-group button {
+    width: 32px;
+    height: 32px;
+  }
+
+  .map .maplibregl-ctrl-bottom-right {
+    top: 86px;
+    right: 16px;
+  }
+}
+
+/* Drawing handles on the zone editor: polygon vertices, edge midpoints, a circle's centre and
+   radius grip. The colour follows the zone kind through --handle-color. Hover feedback uses
+   box-shadow, because MapLibre positions a marker with its transform. */
+.zone-handle {
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--surface-2);
+  border-radius: 50%;
+  background: var(--handle-color, var(--zone-nofly));
+  box-shadow: 0 0 0 1px var(--map-marker-shadow-strong);
+  cursor: grab;
+}
+
+.zone-handle:hover {
+  box-shadow:
+    0 0 0 1px var(--map-marker-shadow-strong),
+    0 0 0 5px var(--handle-halo, var(--zone-nofly-halo));
+}
+
+.zone-handle:active {
+  cursor: grabbing;
+}
+
+.zone-handle.is-mid {
+  width: 10px;
+  height: 10px;
+  border-color: var(--handle-color, var(--zone-nofly));
+  background: var(--surface-2);
+  opacity: 0.8;
+  cursor: copy;
+}
+
+.zone-handle.is-radius {
+  border-radius: 3px;
+}
+
+.zone-handle.is-pending {
+  width: 12px;
+  height: 12px;
+  cursor: crosshair;
+}
+
+/* The first point of a polygon being drawn: click it to close the shape. */
+.zone-handle.is-first {
+  width: 18px;
+  height: 18px;
+  border-color: var(--gold);
+  cursor: pointer;
+}
+
+/* Take-off, landing and alert pins on a flight replay. The colour is set per pin as --pin-color. */
+.flight-pin {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--surface-2);
+  border-radius: 50%;
+  background: var(--pin-color, var(--pine));
+  box-shadow: 0 0 0 1px var(--map-marker-shadow-strong);
+  color: var(--surface-2);
+  font:
+    600 10px/1 var(--font-mono),
+    monospace;
+}
+
+.flight-pin.is-alert {
+  width: 18px;
+  height: 18px;
+  font-size: 11px;
+}

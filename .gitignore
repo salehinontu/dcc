@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.data/
+tools/media/mediamtx/
+*.log
+.env
+.env.local
+infra/.env.production
+infra/certs/
+.DS_Store
+coverage/
+apps/web/dist/
+auto.crt
+auto.key
+# This repository uses pnpm; an npm lockfile is noise
+package-lock.json
+releases/

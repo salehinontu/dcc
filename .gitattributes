@@ -1,0 +1,16 @@
+* text=auto eol=lf
+
+# Shell scripts must keep LF endings or they fail under Git Bash.
+*.sh text eol=lf
+
+# Batch files must keep CRLF endings or cmd.exe misparses blocks and labels.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.exe binary
+*.zip binary

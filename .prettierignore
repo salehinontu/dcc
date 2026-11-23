@@ -1,0 +1,17 @@
+pnpm-lock.yaml
+node_modules/
+**/dist/
+.data/
+docs/screenshots/
+tools/media/mediamtx/
+
+# Agent tooling assets, not application source.
+.claude/
+.opencode/
+
+# The approved standalone design preview is hand-authored; keep it byte-stable.
+design/
+
+# Documentation prose is wrapped by hand, not reflowed by Prettier.
+*.md
+docs/architecture/*.html

@@ -1,0 +1,47 @@
+{
+  "name": "dji-fleet-poc",
+  "description": "DJI fleet dashboard POC built on the DJI Cloud API",
+  "private": true,
+  "packageManager": "pnpm@10.20.0",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  },
+  "scripts": {
+    "dev": "node tools/dev/start.mjs",
+    "dev:core": "node tools/dev/start.mjs --core",
+    "typecheck": "pnpm -r typecheck",
+    "build": "pnpm -r build",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "media": "node tools/media/start.mjs",
+    "docker:dev": "docker compose -f infra/docker-compose.dev.yml watch",
+    "docker:dev:up": "docker compose -f infra/docker-compose.dev.yml up -d --build",
+    "docker:dev:down": "docker compose -f infra/docker-compose.dev.yml down",
+    "docker:preflight:dev": "node tools/docker/preflight.mjs --dev",
+    "docker:preflight:prod": "node tools/docker/preflight.mjs --prod",
+    "docker:prod": "node tools/docker/preflight.mjs --prod && docker compose --env-file infra/.env.production -f infra/docker-compose.prod.yml up -d --build",
+    "docker:prod:down": "docker compose --env-file infra/.env.production -f infra/docker-compose.prod.yml down",
+    "admin": "pnpm --filter @dji/api admin",
+    "models:fetch": "pnpm --filter @dji/api models:fetch",
+    "test:rbac:ui": "node tools/e2e/rbac.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.13.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10",
+    "puppeteer-core": "^25.15.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.72.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "@node-rs/argon2"
+    ]
+  }
+}
